@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 	use strict;
 	use warnings;
+	use Mail::IMAPClient::BodyStructure;
 	use Mail::IMAPClient;
 	use IO::Socket::SSL;
 	use Term::ANSIColor;
@@ -33,17 +34,18 @@ my $imap = Mail::IMAPClient->new(
   )
   or die "IMAPClient::new(): $@";
 
-# Listing all of your folders
+	# Listing all of your folders
 print "I'm authenticated\n" if $imap->IsAuthenticated();
 #my @folders = $imap->folders();
 #print join("\n* ", 'Folders:', @folders), "\n";
 
 my $msgcount = $imap->message_count($Conf::conf{"folder.todo"}); 
 defined($msgcount) or die "Could not message_count: $@\n";
-print "We have $msgcount unread messages in ". $Conf::conf{"folder.todo"}."\n";
+print "We have $msgcount unread messages in ". PUSHCOLOR GREEN . $Conf::conf{"folder.todo"}. POPCOLOR . "\n";
 
 if ($msgcount > 0)
 {
+	#I should probably add a if !->exists then ->create thing here...
 	print "Attempting to select a folder....";
 	if ($imap->selectable($Conf::conf{"folder.todo"}))
 	{
@@ -53,12 +55,31 @@ if ($msgcount > 0)
 		my @unread = $imap->unseen or warn "Could not find unseen msgs: $@\n";
 		foreach (@unread)
 		{
-			print "=======$_=======\n";
-			print "Subject:" . $imap->subject($_);
-			my $body =  $imap->body_string($_);
-			print "Body:" . $body;
-			print "\n";
-			
+			print PUSHCOLOR BLUE . "=======$_=======" . POPCOLOR . "\n";
+			print "Getting body structure...\n";
+			my $body = $imap->get_bodystructure($_)
+				or die "Could not get_bodystructure: $@\n";
+			if ($body->bodytype ne "TEXT" or $body->bodysubtype ne "PLAIN")
+			{
+				print PUSHCOLOR RED . "I don't deal with " . $body->bodytype . "/" . $body->bodysubtype . " messages" . POPCOLOR . "\n";
+				next;
+			}
+			print "Continue the parse...\n";
+			#print "params: " . $body->bodyparams(). "\n";
+			print "bodydisp: " . $body->bodydisp. "\n";
+			print "bodyid: " . $body->bodyid . "\n";
+			print "bodydesc: " . $body->bodydesc . "\n";
+			print "bodyenc: " . $body->bodyenc . "\n";
+			print "bodysize: " . $body->bodysize . "\n";
+			print "bodylang: " . $body->bodylang . "\n";
+			print "textlines: " . $body->textlines . "\n";
+			my $envelope = $imap->get_envelope($_)
+				or die ("Can't get evnelope: $@\n");			
+			print "Subject:". $envelope->subject ."\n";
+			print "inreplyto". $envelope->inreplyto . "\n";
+			print "from" . $envelope->from . "\n";
+			print "messageid" . $envelope->messageid . "\n";
+			print "bcc/date/replyto/sender/cc\n";
 		}
 	}
 	else
