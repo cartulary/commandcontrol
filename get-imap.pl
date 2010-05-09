@@ -17,26 +17,26 @@
 
 sub sendResults {
 	my $x = shift;
-	print PUSHCOLOR YELLOW . $x . POPCOLOR;
-	my $smtp = new Net::SMTP::TLS(
+#	print PUSHCOLOR YELLOW . $x . POPCOLOR;
+	my $mailer = new Net::SMTP::TLS(
 		$Conf::conf{"send-server"},
-		'Hello' => 'hello.google.com',
-		'Port' => $Conf::conf{"send-server-port"},
-		'User' => $Conf::conf{"username"},
-		'Password' => $Conf::conf{"password"}
-		) or die("failed to create smtp connection");
-#	$smtp->auth($Conf::conf{"username"},$Conf::conf{"password"}) or die("smtp auth failed");
-	$smtp->mail($Conf::conf{"result.to"});
-	$smtp->data();
-	$smtp->datasend("$x");
-	$smtp->datasend();
-	$smtp->quit();
+        Hello   =>      $Conf::conf{"result.host.from"},
+        Port    =>      $Conf::conf{"send-port"},
+        User    =>      $Conf::conf{"username"},
+        Password=>      $Conf::conf{"password"},
+	) or die ("failed to create session");
+	$mailer->mail($Conf::conf{"username"});
+	$mailer->to($Conf::conf{"result.to"});
+	$mailer->data;
+	$mailer->datasend($x);
+	$mailer->dataend;
+	$mailer->quit;
 }
 
 sub doCommand {
 	my $command = $_[0];
 	print "Performing command $command...";
-	return `$command`;
+	return `script $command`;
 }
 
 sub doMessage {
