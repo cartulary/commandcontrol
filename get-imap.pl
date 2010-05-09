@@ -7,6 +7,50 @@
 	use Term::ANSIColor;
 	use Term::ANSIColor qw(:pushpop);
 	use Conf;
+	use Data::Dumper;
+	use v5.10;
+
+	use constant false => 0;
+	use constant true  => 1;
+
+sub sendResults {
+}
+
+sub doCommand {
+	my $command = $_[0];
+	print "Performing command $command...";
+	return `$command`;
+}
+
+sub doMessage {
+	print "Doing a message...\n";
+	my %command = ();
+	$command{"command"} = undef;
+	$command{"reply"} = false;
+	my @lines = split('/\n/',@_);
+	foreach(@lines)
+	{
+		my @coml = split(":",$_,2);
+		print $coml[0] ."\n";
+		print "Command: ". $coml[0];
+		print "\nText:" .$coml[1];
+		print "\n";
+		given(uc $coml[0])
+		{
+			when("COMMAND")
+			{
+				$command{"command"} = $coml[1];
+				print PUSHCOLOR BLUE . $coml[1] . POPCOLOR ."\n";
+			}
+			when ("REPLY")
+			{
+				$command{"reply"} = true;
+			}
+		}
+	}
+#	defined($command{"command"}) && doCommand($command{"command"});
+	print "\n";
+}
 
 if ($Conf::conf{"get-server-type"} ne "imap")
 {
@@ -66,29 +110,18 @@ if ($msgcount > 0)
 			}
 			print "Continue the parse...\n";
 			#print "params: " . $body->bodyparams(). "\n";
-			print "bodydisp: " . $body->bodydisp. "\n";
-			print "bodyid: " . $body->bodyid . "\n";
-			print "bodydesc: " . $body->bodydesc . "\n";
-			print "bodyenc: " . $body->bodyenc . "\n";
-			print "bodysize: " . $body->bodysize . "\n";
-			print "bodylang: " . $body->bodylang . "\n";
-			print "textlines: " . $body->textlines . "\n";
 			my $envelope = $imap->get_envelope($_)
 				or die ("Can't get evnelope: $@\n");			
-			print "Subject:". $envelope->subject ."\n";
-			print "inreplyto". $envelope->inreplyto . "\n";
-			print "from" . $envelope->from . "\n";
-			print "messageid" . $envelope->messageid . "\n";
-			print "bcc" . $envelope->bcc . "\n";
-			print "date" . $envelope->date . "\n";
-			print "Reply to:";
-#			foreach($envelope->replyto)
-#			{
-#				print "$_;";
-#			}
-			print "\n";
-			print "sender" . $envelope->sender . "\n";
-			print "cc" . $envelope->cc . "\n";
+			my $m_id  =  $envelope->messageid;
+			my $m_subject = $envelope->subject;
+			my $from_full = $imap->get_header($_,"From");
+			my $msg =  $imap->body_string($_);
+			if ($from_full ne $Conf::conf{"auth.from"})
+			{
+				print PUSHCOLOR RED . "Evil from bit" . POPCOLOR . "\n";
+				next;
+			}
+			doMessage($msg);			
 		}
 	}
 	else
@@ -102,5 +135,7 @@ else
 }
 
 # Say goodbye
+print "outa here\n";
 $imap->logout();
 print "\n";
+
