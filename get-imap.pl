@@ -18,25 +18,28 @@
 sub sendResults {
 	my $x = shift;
 #	print PUSHCOLOR YELLOW . $x . POPCOLOR;
+	printing "Attempting to connect to SMTP...";
 	my $mailer = new Net::SMTP::TLS(
 		$Conf::conf{"send-server"},
         Hello   =>      $Conf::conf{"result.host.from"},
-        Port    =>      $Conf::conf{"send-port"},
+        Port    =>      $Conf::conf{"send-server-port"},
         User    =>      $Conf::conf{"username"},
         Password=>      $Conf::conf{"password"},
 	) or die ("failed to create session");
+	print "We connected ... sending mail";
 	$mailer->mail($Conf::conf{"username"});
 	$mailer->to($Conf::conf{"result.to"});
 	$mailer->data;
 	$mailer->datasend($x);
 	$mailer->dataend;
+	print "Quiting...";
 	$mailer->quit;
 }
 
 sub doCommand {
 	my $command = $_[0];
 	print "Performing command $command...";
-	return `script $command`;
+	return `script $command 2>&1`;
 }
 
 sub doMessage {
