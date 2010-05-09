@@ -126,6 +126,7 @@ if ($msgcount > 0)
 		my @unread = $imap->unseen or warn "Could not find unseen msgs: $@\n";
 		foreach (@unread)
 		{
+			$imap->see($_);
 			print PUSHCOLOR BLUE . "=======$_=======" . POPCOLOR . "\n";
 			print "Getting body structure...\n";
 			my $body = $imap->get_bodystructure($_)
@@ -148,7 +149,7 @@ if ($msgcount > 0)
 				print PUSHCOLOR RED . "Evil from bit" . POPCOLOR . "\n";
 				next;
 			}
-			doMessage($msg, $m_id);			
+			doMessage($msg, "$m_subject ($m_id)");
 		}
 	}
 	else
@@ -163,6 +164,7 @@ else
 
 # Say goodbye
 print "outa here\n";
+$imap->close();
 $imap->logout();
 print "\n";
 
