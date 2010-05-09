@@ -17,6 +17,7 @@
 
 sub sendResults {
 	my $x = shift;
+	my $m_id = shift;
 #	print PUSHCOLOR YELLOW . $x . POPCOLOR;
 	print"Attempting to connect to SMTP...";
 	my $mailer = new Net::SMTP::TLS(
@@ -30,6 +31,7 @@ sub sendResults {
 	$mailer->mail($Conf::conf{"username"});
 	$mailer->to($Conf::conf{"result.to"});
 	$mailer->data;
+	$mailer->datasend("Subject: re $m_id\n");
 	$mailer->datasend($x);
 	$mailer->dataend;
 	print "Quiting...";
@@ -39,7 +41,7 @@ sub sendResults {
 sub doCommand {
 	my $command = $_[0];
 	print "Performing command $command...";
-	return `script $command 2>&1`;
+	return `$command 2>&1`;
 }
 
 sub doMessage {
@@ -48,6 +50,7 @@ sub doMessage {
 	$command{"command"} = undef;
 	$command{"reply"} = false;
 	my @lines = split('\n',$_[0]);
+	my $m_id = $_[1];
 	foreach(@lines)
 	{
 		my @coml = split(":",$_,2);
@@ -72,7 +75,7 @@ sub doMessage {
 	{
 		$res = doCommand($command{"command"});
 	}
-	sendResults($res);
+	sendResults($res, $m_id);
 	print "\n";
 }
 
@@ -145,7 +148,7 @@ if ($msgcount > 0)
 				print PUSHCOLOR RED . "Evil from bit" . POPCOLOR . "\n";
 				next;
 			}
-			doMessage($msg);			
+			doMessage($msg, $m_id);			
 		}
 	}
 	else
