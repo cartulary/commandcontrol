@@ -79,7 +79,16 @@ if ($msgcount > 0)
 			print "inreplyto". $envelope->inreplyto . "\n";
 			print "from" . $envelope->from . "\n";
 			print "messageid" . $envelope->messageid . "\n";
-			print "bcc/date/replyto/sender/cc\n";
+			print "bcc" . $envelope->bcc . "\n";
+			print "date" . $envelope->date . "\n";
+			print "Reply to:";
+#			foreach($envelope->replyto)
+#			{
+#				print "$_;";
+#			}
+			print "\n";
+			print "sender" . $envelope->sender . "\n";
+			print "cc" . $envelope->cc . "\n";
 		}
 	}
 	else
