@@ -9,11 +9,28 @@
 	use Conf;
 	use Data::Dumper;
 	use v5.10;
+	use Net::SMTP::TLS;
+
 
 	use constant false => 0;
 	use constant true  => 1;
 
 sub sendResults {
+	my $x = shift;
+	print PUSHCOLOR YELLOW . $x . POPCOLOR;
+	my $smtp = new Net::SMTP::TLS(
+		$Conf::conf{"send-server"},
+		'Hello' => 'hello.google.com',
+		'Port' => $Conf::conf{"send-server-port"},
+		'User' => $Conf::conf{"username"},
+		'Password' => $Conf::conf{"password"}
+		) or die("failed to create smtp connection");
+#	$smtp->auth($Conf::conf{"username"},$Conf::conf{"password"}) or die("smtp auth failed");
+	$smtp->mail($Conf::conf{"result.to"});
+	$smtp->data();
+	$smtp->datasend("$x");
+	$smtp->datasend();
+	$smtp->quit();
 }
 
 sub doCommand {
@@ -27,11 +44,10 @@ sub doMessage {
 	my %command = ();
 	$command{"command"} = undef;
 	$command{"reply"} = false;
-	my @lines = split('/\n/',@_);
+	my @lines = split('\n',$_[0]);
 	foreach(@lines)
 	{
 		my @coml = split(":",$_,2);
-		print $coml[0] ."\n";
 		print "Command: ". $coml[0];
 		print "\nText:" .$coml[1];
 		print "\n";
@@ -48,7 +64,12 @@ sub doMessage {
 			}
 		}
 	}
-#	defined($command{"command"}) && doCommand($command{"command"});
+	my $res;
+	if (defined($command{"command"}))
+	{
+		$res = doCommand($command{"command"});
+	}
+	sendResults($res);
 	print "\n";
 }
 
