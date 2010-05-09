@@ -18,7 +18,7 @@
 sub sendResults {
 	my $x = shift;
 #	print PUSHCOLOR YELLOW . $x . POPCOLOR;
-	printing "Attempting to connect to SMTP...";
+	print"Attempting to connect to SMTP...";
 	my $mailer = new Net::SMTP::TLS(
 		$Conf::conf{"send-server"},
         Hello   =>      $Conf::conf{"result.host.from"},
