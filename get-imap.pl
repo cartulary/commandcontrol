@@ -33,7 +33,7 @@ sub sendResults {
 		$cfg->param('send.server'),
         Hello   =>      $cfg->param("send.result_host_from"),
         Port    =>      $cfg->param("send.port"),
-        User    =>      $cfg->param("auth.username"),
+        User    =>      $cfg->param("auth.user"),
         Password=>      $cfg->param("auth.password"),
 	) or die ("failed to create session");
 	print "We connected ... sending mail";
@@ -99,6 +99,7 @@ print "Connecting to..." . PUSHCOLOR GREEN;
 print $cfg->param('get.server') . ":";
 print $cfg->param('get.port');
 print " " . POPCOLOR . "\n";
+
 
 # Connect to the IMAP server via SSL
 my $socket = IO::Socket::SSL->new(
