@@ -1,16 +1,17 @@
-#!/usr/bin/env perl
+#!/usr/bin/env -S perl -T
 	use strict;
 	use warnings;
+	use v5.10;
+
 	use Mail::IMAPClient::BodyStructure;
 	use Mail::IMAPClient;
 	use IO::Socket::SSL;
 	use Term::ANSIColor;
 	use Term::ANSIColor qw(:pushpop);
-	use Conf;
 	use Data::Dumper;
-	use v5.10;
 	use Net::SMTP::TLS;
 
+	require './conf.pl';
 
 	use constant false => 0;
 	use constant true  => 1;
