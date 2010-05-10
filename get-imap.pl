@@ -1,4 +1,4 @@
-#!/usr/bin/env -S perl -T
+#!/usr/bin/env -S perl -T 
 	use strict;
 	use warnings;
 	use v5.10;
@@ -10,15 +10,19 @@
 	use Term::ANSIColor qw(:pushpop);
 	use Data::Dumper;
 	use Net::SMTP::TLS;
+	use Config::Simple;
+	##switch to use Config::Find...
+	use File::HomeDir;
 
 	use constant false => 0;
 	use constant true  => 1;
 
-	require './conf.pl';
-	if ($@)
-	{
-		die "config file failed to load...";
-	}
+my $prog_name = (split "/", $0)[-1];
+$prog_name =~ s/\.[^.]*$//;
+my $conf_file = File::HomeDir->my_home . "/.$prog_name"."rc";
+print "Attempting to open $conf_file\n";
+my $cfg = new Config::Simple();
+$cfg->read($conf_file) or die $cfg->error;
 
 sub sendResults {
 	my $x = shift;
@@ -26,15 +30,15 @@ sub sendResults {
 #	print PUSHCOLOR YELLOW . $x . POPCOLOR;
 	print"Attempting to connect to SMTP...";
 	my $mailer = new Net::SMTP::TLS(
-		$Conf::conf{"send-server"},
-        Hello   =>      $Conf::conf{"result.host.from"},
-        Port    =>      $Conf::conf{"send-server-port"},
-        User    =>      $Conf::conf{"username"},
-        Password=>      $Conf::conf{"password"},
+		$cfg->param('send.server'),
+        Hello   =>      $cfg->param("send.result_host_from"),
+        Port    =>      $cfg->param("send.port"),
+        User    =>      $cfg->param("auth.username"),
+        Password=>      $cfg->param("auth.password"),
 	) or die ("failed to create session");
 	print "We connected ... sending mail";
-	$mailer->mail($Conf::conf{"username"});
-	$mailer->to($Conf::conf{"result.to"});
+	$mailer->mail($cfg->param("auth.username"));
+	$mailer->to($cfg->param("send.result_to"));
 	$mailer->data;
 	$mailer->datasend("Subject: re $m_id\n");
 	$mailer->datasend($x);
@@ -84,29 +88,31 @@ sub doMessage {
 	print "\n";
 }
 
-if ($Conf::conf{"get-server-type"} ne "imap")
+
+
+if (uc $cfg->param("get.type") ne "IMAP" or uc $cfg->param("send.type") ne "SMTP")
 {
-	die("we don't support that type of mailbox yet");
+	die("Right now we only support IMAP+SMTP accounts");
 }
 
-
 print "Connecting to..." . PUSHCOLOR GREEN;
-print $Conf::conf{"get-server"} . ":";
-print $Conf::conf{"get-server-port"};
+print $cfg->param('get.server') . ":";
+print $cfg->param('get.port');
 print " " . POPCOLOR . "\n";
 
 # Connect to the IMAP server via SSL
 my $socket = IO::Socket::SSL->new(
-	PeerAddr => $Conf::conf{"get-server"},
-	PeerPort => $Conf::conf{"get-server-port"}
+	PeerAddr => $cfg->param('get.server'),
+	PeerPort => $cfg->param('get.port')
    )
 	or die "socket(): $@";
 
-print "Attempting to login as ". PUSHCOLOR GREEN . $Conf::conf{"username"}. POPCOLOR ."\n";
+print "Attempting to login as ". PUSHCOLOR GREEN . $cfg->param('auth.user'). POPCOLOR ."\n";
+#TODO: check to see if send or get have a different more specific username/password....
 my $imap = Mail::IMAPClient->new(
    Socket   => $socket,
-   User     => $Conf::conf{"username"},
-   Password => $Conf::conf{"password"},
+   User     => $cfg->param('auth.user'),
+   Password => $cfg->param('auth.password'),
   )
   or die "IMAPClient::new(): $@";
 
@@ -115,17 +121,18 @@ print "I'm authenticated\n" if $imap->IsAuthenticated();
 #my @folders = $imap->folders();
 #print join("\n* ", 'Folders:', @folders), "\n";
 
-my $msgcount = $imap->message_count($Conf::conf{"folder.todo"}); 
+my $folder = $cfg->param("get.folder_todo");
+my $msgcount = $imap->message_count($folder); 
 defined($msgcount) or die "Could not message_count: $@\n";
-print "We have $msgcount unread messages in ". PUSHCOLOR GREEN . $Conf::conf{"folder.todo"}. POPCOLOR . "\n";
+print "We have $msgcount unread messages in ". PUSHCOLOR GREEN . $folder. POPCOLOR . "\n";
 
 if ($msgcount > 0)
 {
 	#I should probably add a if !->exists then ->create thing here...
 	print "Attempting to select a folder....";
-	if ($imap->selectable($Conf::conf{"folder.todo"}))
+	if ($imap->selectable($folder))
 	{
-		$imap->select($Conf::conf{"folder.todo"}) or die "Could not select: $@\n"	;
+		$imap->select($folder) or die "Could not select: $@\n"	;
 		print "done\n";
 		print "Getting a list of unseen messages....\n";
 		my @unread = $imap->unseen or warn "Could not find unseen msgs: $@\n";
@@ -149,7 +156,7 @@ if ($msgcount > 0)
 			my $m_subject = $envelope->subject;
 			my $from_full = $imap->get_header($_,"From");
 			my $msg =  $imap->body_string($_);
-			if ($from_full ne $Conf::conf{"auth.from"})
+			if ($from_full ne $cfg->param('get.from_only'))
 			{
 				print PUSHCOLOR RED . "Evil from bit" . POPCOLOR . "\n";
 				next;
