@@ -11,10 +11,14 @@
 	use Data::Dumper;
 	use Net::SMTP::TLS;
 
-	require './conf.pl';
-
 	use constant false => 0;
 	use constant true  => 1;
+
+	require './conf.pl';
+	if ($@)
+	{
+		die "config file failed to load...";
+	}
 
 sub sendResults {
 	my $x = shift;
