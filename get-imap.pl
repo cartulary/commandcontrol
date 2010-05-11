@@ -18,9 +18,6 @@
 	##switch to use Config::Find...
 	use File::HomeDir;
 
-	use constant FALSE => 0;
-	use constant TRUE  => 1;
-
 my $prog_name = (split "/", $0)[-1];
 $prog_name =~ s/\.[^.]*$//;
 my $conf_file = File::HomeDir->my_home . "/.$prog_name"."rc";
@@ -82,7 +79,7 @@ sub doMessage {
 			}
 			when ("REPLY")
 			{
-				$command{"reply"} = TRUE;
+				$command{"reply"} = 1;
 			}
 			when ("HASH")
 			{
