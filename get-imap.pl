@@ -14,7 +14,7 @@
 	use Term::ANSIColor qw(:pushpop);
 	use Data::Dumper;
 	use Net::SMTP::TLS;
-	use Config::Simple;
+	use Config::Simple('-lc -strict');
 	##switch to use Config::Find...
 	use File::HomeDir;
 
