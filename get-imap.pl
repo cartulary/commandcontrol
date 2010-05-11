@@ -14,8 +14,8 @@
 	##switch to use Config::Find...
 	use File::HomeDir;
 
-	use constant false => 0;
-	use constant true  => 1;
+	use constant FALSE => 0;
+	use constant TRUE  => 1;
 
 my $prog_name = (split "/", $0)[-1];
 $prog_name =~ s/\.[^.]*$//;
@@ -55,11 +55,14 @@ sub doCommand {
 
 sub doMessage {
 	print "Doing a message...\n";
-	my %command = ();
-	$command{"command"} = undef;
-	$command{"reply"} = false;
+	my %command = (
+		command => undef,
+		reply => undef,
+		hash => undef,
+		);
 	my @lines = split('\n',$_[0]);
 	my $m_id = $_[1];
+	#I need to deal with multiline commands eventually
 	foreach(@lines)
 	{
 		my @coml = split(":",$_,2);
@@ -75,7 +78,15 @@ sub doMessage {
 			}
 			when ("REPLY")
 			{
-				$command{"reply"} = true;
+				$command{"reply"} = TRUE;
+			}
+			when ("HASH")
+			{
+				$command{"hash"} = $coml[1];
+			}
+			default
+			{
+				print PUSHCOLOR RED, "Error! Invalid command",POPCOLOR;
 			}
 		}
 	}
