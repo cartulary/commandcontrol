@@ -1,4 +1,8 @@
 #!/usr/bin/env -S perl
+
+##TODO:
+	#Implement some security features (like a hash of the p/w + command text)
+	#Add the ability to save command output to a file instead
 	use strict;
 	use warnings;
 	use v5.10;
